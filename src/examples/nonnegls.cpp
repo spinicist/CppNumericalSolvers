@@ -7,19 +7,23 @@
 namespace cppoptlib {
 
 // we will solve ||Xb-y|| s.t. b>=0
-template<typename T>
-class NonNegativeLeastSquares : public Problem<T> {
-    const Matrix<T> X;
-    const Vector<T> y;
+template<typename T, int D>
+class NonNegativeLeastSquares : public Problem<T, D> {
+  public:
+    using typename Problem<T, D>::VectorType;
+    using typename Problem<T, D>::MatrixType;
+
+    const MatrixType X;
+    const VectorType y;
 
   public:
-    NonNegativeLeastSquares(const Matrix<T> &X_, const Vector<T> y_) : X(X_), y(y_) {}
+    NonNegativeLeastSquares(const MatrixType &X_, const VectorType y_) : X(X_), y(y_) {}
 
-    T value(const Vector<T> &beta) {
+    T value(const VectorType &beta) {
         return (X*beta-y).dot(X*beta-y);
     }
 
-    void gradient(const Vector<T> &beta, Vector<T> &grad) {
+    void gradient(const VectorType &beta, VectorType &grad) {
         grad = X.transpose()*2*(X*beta-y);
     }
 };
@@ -30,23 +34,26 @@ int main(int argc, char const *argv[]) {
     const size_t DIM = 4;
     const size_t NUM = 5;
     typedef double T;
+    typedef cppoptlib::NonNegativeLeastSquares<T, DIM> TNNLS;
+    typedef typename TNNLS::VectorType VectorType;
+    typedef typename TNNLS::MatrixType MatrixType;
 
     // create model X*b for arbitrary b
-    cppoptlib::Matrix<T> X         = cppoptlib::Matrix<T>::Random(NUM, DIM);
-    cppoptlib::Vector<T> true_beta = cppoptlib::Vector<T>::Random(DIM);
-    cppoptlib::Vector<T> y         = X*true_beta;
+    MatrixType X         = MatrixType::Random(NUM, DIM);
+    VectorType true_beta = VectorType::Random();
+    MatrixType y         = X*true_beta;
 
     // perform non-negative least squares
-    cppoptlib::NonNegativeLeastSquares<T> f(X, y);
-    f.setLowerBound(cppoptlib::Vector<double>::Zero(DIM));
+    TNNLS f(X, y);
+    f.setLowerBound(VectorType::Zero());
 
     // create initial guess (make sure it's valid >= 0)
-    cppoptlib::Vector<T> beta = cppoptlib::Vector<T>::Random(DIM);
+    VectorType beta = VectorType::Random();
     beta = (beta.array() < 0).select(-beta, beta);
     std::cout << "start with b =          " << beta.transpose() << std::endl;
 
     // init L-BFGS-B for box-constrained solving
-    cppoptlib::LbfgsbSolver<double> solver;
+    cppoptlib::LbfgsbSolver<TNNLS> solver;
     solver.minimize(f, beta);
 
     // display results

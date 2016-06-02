@@ -10,19 +10,21 @@ namespace cppoptlib {
 // we use a templated-class rather than "auto"-lambda function for a clean architecture
 template<typename T>
 class LogisticRegression : public Problem<T> {
-    const Matrix<T> X;
-    const Vector<T> y;
-    const Matrix<T> XX;
-
   public:
-    LogisticRegression(const Matrix<T> &X_, const Vector<T> y_) : X(X_), y(y_), XX(X_.transpose()*X_) {}
+    using typename Problem<T>::VectorType;
+    using typename Problem<T>::MatrixType;
+    const MatrixType X;
+    const VectorType y;
+    const MatrixType XX;
 
-    T value(const Vector<T> &beta) {
+    LogisticRegression(const MatrixType &X_, const VectorType y_) : X(X_), y(y_), XX(X_.transpose()*X_) {}
+
+    T value(const VectorType &beta) {
         return (1.0/(1.0 + exp(-(X*beta).array())) - y.array()).matrix().squaredNorm();
     }
 
-    void gradient(const Vector<T> &beta, Vector<T> &grad) {
-        const Vector<T> p = 1.0/(1.0 + exp(-(X*beta).array()));
+    void gradient(const VectorType &beta, VectorType &grad) {
+        const VectorType p = 1.0/(1.0 + exp(-(X*beta).array()));
         grad = X.transpose()*(p-y);
     }
 };
@@ -30,21 +32,24 @@ class LogisticRegression : public Problem<T> {
 }
 int main(int argc, char const *argv[]) {
     typedef double T;
+    typedef cppoptlib::LogisticRegression<T> LogReg;
+    typedef typename LogReg::VectorType VectorType;
+    typedef typename LogReg::MatrixType MatrixType;
     srand((unsigned int) time(0));
 
     // create true model
-    cppoptlib::Vector<T> true_beta = cppoptlib::Vector<T>::Random(4);
+    VectorType true_beta = VectorType::Random(4);
 
     // create data
-    cppoptlib::Matrix<T> X = cppoptlib::Matrix<T>::Random(50, 4);
-    cppoptlib::Vector<T> y = 1.0/(1.0 + exp(-(X*true_beta).array()));
+    MatrixType X = MatrixType::Random(50, 4);
+    VectorType y = 1.0/(1.0 + exp(-(X*true_beta).array()));
 
     // perform linear regression
-    cppoptlib::LogisticRegression<T> f(X, y);
+    LogReg f(X, y);
 
-    cppoptlib::Vector<T> beta = cppoptlib::Vector<T>::Random(4);
+    VectorType beta = VectorType::Random(4);
     std::cout << "start in   " << beta.transpose() << std::endl;
-    cppoptlib::BfgsSolver<double> solver;
+    cppoptlib::BfgsSolver<LogReg> solver;
     solver.minimize(f, beta);
 
     std::cout << "result     " << beta.transpose() << std::endl;
