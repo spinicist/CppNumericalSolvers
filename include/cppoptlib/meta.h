@@ -3,7 +3,7 @@
 #define META_H
 
 #include <iostream>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
 namespace cppoptlib {
 
