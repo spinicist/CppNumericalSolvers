@@ -12,15 +12,15 @@ class NelderMeadSolver : public ISolver<ProblemType, 0> {
  public:
   using Superclass = ISolver<ProblemType, 0>;
   using typename Superclass::Scalar;
-  using typename Superclass::VectorType;
-  using typename Superclass::MatrixType;
+  using typename Superclass::TVector;
+  using MatrixType = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
   /**
    * @brief minimize
    * @details [long description]
    *
    * @param objFunc [description]
    */
-  void minimize(ProblemType &objFunc, VectorType & x) {
+  void minimize(ProblemType &objFunc, TVector & x) {
 
     const Scalar rho = 1.;    // rho > 0
     const Scalar xi  = 2.;    // xi  > max(rho, 1)
@@ -48,7 +48,7 @@ class NelderMeadSolver : public ISolver<ProblemType, 0> {
     std::vector<Scalar> f; f.resize(DIM + 1);
     std::vector<int> index; index.resize(DIM + 1);
     for (int i = 0; i < DIM + 1; ++i) {
-      f[i] = objFunc(static_cast<VectorType >(x0.col(i)));
+      f[i] = objFunc(static_cast<TVector >(x0.col(i)));
       index[i] = i;
     }
 
@@ -85,19 +85,19 @@ class NelderMeadSolver : public ISolver<ProblemType, 0> {
       //////////////////////////
 
       // midpoint of the simplex opposite the worst point
-      VectorType x_bar = VectorType::Zero(DIM);
+      TVector x_bar = TVector::Zero(DIM);
       for (int i = 0; i < DIM; ++i) {
         x_bar += x0.col(index[i]);
       }
       x_bar /= Scalar(DIM);
 
       // Compute the reflection point
-      const VectorType x_r   = ( 1. + rho ) * x_bar - rho   * x0.col(index[DIM]);
+      const TVector x_r   = ( 1. + rho ) * x_bar - rho   * x0.col(index[DIM]);
       const Scalar f_r = objFunc(x_r);
 
       if (f_r < f[index[0]]) {
         // the expansion point
-        const VectorType x_e = ( 1. + rho * xi ) * x_bar - rho * xi   * x0.col(index[DIM]);
+        const TVector x_e = ( 1. + rho * xi ) * x_bar - rho * xi   * x0.col(index[DIM]);
         const Scalar f_e = objFunc(x_e);
         if ( f_e < f_r ) {
           // expand
@@ -115,7 +115,7 @@ class NelderMeadSolver : public ISolver<ProblemType, 0> {
         } else {
           // contraction
           if (f_r < f[index[DIM]]) {
-            const VectorType x_c = (1 + rho * gam) * x_bar - rho * gam * x0.col(index[DIM]);
+            const TVector x_c = (1 + rho * gam) * x_bar - rho * gam * x0.col(index[DIM]);
             const Scalar f_c = objFunc(x_c);
             if ( f_c <= f_r ) {
               // outside
@@ -126,7 +126,7 @@ class NelderMeadSolver : public ISolver<ProblemType, 0> {
             }
           } else {
             // inside
-            const VectorType x_c = ( 1 - gam ) * x_bar + gam   * x0.col(index[DIM]);
+            const TVector x_c = ( 1 - gam ) * x_bar + gam   * x0.col(index[DIM]);
             const Scalar f_c = objFunc(x_c);
             if (f_c < f[index[DIM]]) {
               x0.col(index[DIM]) = x_c;

@@ -10,20 +10,20 @@ namespace cppoptlib {
 template<typename T, int D>
 class NonNegativeLeastSquares : public Problem<T, D> {
   public:
-    using typename Problem<T, D>::VectorType;
-    using typename Problem<T, D>::MatrixType;
+    using typename Problem<T, D>::TVector;
+    using MatrixType = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 
     const MatrixType X;
-    const VectorType y;
+    const TVector y;
 
   public:
-    NonNegativeLeastSquares(const MatrixType &X_, const VectorType y_) : X(X_), y(y_) {}
+    NonNegativeLeastSquares(const MatrixType &X_, const TVector y_) : X(X_), y(y_) {}
 
-    T value(const VectorType &beta) {
+    T value(const TVector &beta) {
         return (X*beta-y).dot(X*beta-y);
     }
 
-    void gradient(const VectorType &beta, VectorType &grad) {
+    void gradient(const TVector &beta, TVector &grad) {
         grad = X.transpose()*2*(X*beta-y);
     }
 };
@@ -35,20 +35,20 @@ int main(int argc, char const *argv[]) {
     const size_t NUM = 5;
     typedef double T;
     typedef cppoptlib::NonNegativeLeastSquares<T, DIM> TNNLS;
-    typedef typename TNNLS::VectorType VectorType;
+    typedef typename TNNLS::TVector TVector;
     typedef typename TNNLS::MatrixType MatrixType;
 
     // create model X*b for arbitrary b
     MatrixType X         = MatrixType::Random(NUM, DIM);
-    VectorType true_beta = VectorType::Random();
+    TVector true_beta = TVector::Random();
     MatrixType y         = X*true_beta;
 
     // perform non-negative least squares
     TNNLS f(X, y);
-    f.setLowerBound(VectorType::Zero());
+    f.setLowerBound(TVector::Zero());
 
     // create initial guess (make sure it's valid >= 0)
-    VectorType beta = VectorType::Random();
+    TVector beta = TVector::Random();
     beta = (beta.array() < 0).select(-beta, beta);
     std::cout << "start with b =          " << beta.transpose() << std::endl;
 

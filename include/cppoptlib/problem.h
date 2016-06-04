@@ -12,38 +12,38 @@ class Problem {
  public:
   static const int Dim = Dim_;
   typedef Scalar_ Scalar;
-  using VectorType = Eigen::Matrix<Scalar, Dim, 1>;
-  using SquareMatrixType = Eigen::Matrix<Scalar, Dim, Dim>;
-  using MatrixType = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
-
+  using TVector   = Eigen::Matrix<Scalar, Dim, 1>;
+  using THessian  = Eigen::Matrix<Scalar, Dim, Dim>;
+  using TCriteria = Criteria<Scalar>;
+  
  protected:
 
   bool hasLowerBound_ = false;
   bool hasUpperBound_ = false;
 
-  VectorType lowerBound_;
-  VectorType upperBound_;
+  TVector lowerBound_;
+  TVector upperBound_;
 
  public:
 
   Problem() {}
   virtual ~Problem()= default;
 
-  virtual bool callback(const Criteria<Scalar> &state, const VectorType &x) {
+  virtual bool callback(const Criteria<Scalar> &state, const TVector &x) {
     return true;
   }
 
-  void setBoxConstraint(VectorType  lb, VectorType  ub) {
+  void setBoxConstraint(TVector  lb, TVector  ub) {
     setLowerBound(lb);
     setUpperBound(ub);
   }
 
-  void setLowerBound(VectorType  lb) {
+  void setLowerBound(TVector  lb) {
     lowerBound_    = lb;
     hasLowerBound_ = true;
   }
 
-  void setUpperBound(VectorType  ub) {
+  void setUpperBound(TVector  ub) {
     upperBound_ = ub;
     hasUpperBound_ = true;
   }
@@ -56,11 +56,11 @@ class Problem {
     return hasUpperBound_;
   }
 
-  VectorType lowerBound() {
+  TVector lowerBound() {
     return lowerBound_;
   }
 
-  VectorType upperBound() {
+  TVector upperBound() {
     return upperBound_;
   }
 
@@ -71,7 +71,7 @@ class Problem {
    * @param x [description]
    * @return [description]
    */
-  virtual Scalar value(const  VectorType &x) = 0;
+  virtual Scalar value(const  TVector &x) = 0;
   /**
    * @brief overload value for nice syntax
    * @details [long description]
@@ -79,7 +79,7 @@ class Problem {
    * @param x [description]
    * @return [description]
    */
-  Scalar operator()(const  VectorType &x) {
+  Scalar operator()(const  TVector &x) {
     return value(x);
   }
   /**
@@ -88,7 +88,7 @@ class Problem {
    *
    * @param grad [description]
    */
-  virtual void gradient(const  VectorType &x,  VectorType &grad) {
+  virtual void gradient(const  TVector &x,  TVector &grad) {
     finiteGradient(x, grad);
   }
 
@@ -96,17 +96,17 @@ class Problem {
    * @brief This computes the hessian
    * @details should be overwritten by symbolic hessian, if solver relies on hessian
    */
-  virtual void hessian(const VectorType &x, SquareMatrixType &hessian) {
+  virtual void hessian(const TVector &x, THessian &hessian) {
     finiteHessian(x, hessian);
 
   }
 
-  virtual bool checkGradient(const VectorType &x, int accuracy = 3) {
+  virtual bool checkGradient(const TVector &x, int accuracy = 3) {
     // TODO: check if derived class exists:
     // int(typeid(&Rosenbrock<double>::gradient) == typeid(&Problem<double>::gradient)) == 1 --> overwritten
     const int D = x.rows();
-    VectorType actual_grad(D);
-    VectorType expected_grad(D);
+    TVector actual_grad(D);
+    TVector expected_grad(D);
     gradient(x, actual_grad);
     finiteGradient(x, expected_grad, accuracy);
     for (int d = 0; d < D; ++d) {
@@ -118,13 +118,13 @@ class Problem {
 
   }
 
-  virtual bool checkHessian(const VectorType &x, int accuracy = 3) {
+  virtual bool checkHessian(const TVector &x, int accuracy = 3) {
     // TODO: check if derived class exists:
     // int(typeid(&Rosenbrock<double>::gradient) == typeid(&Problem<double>::gradient)) == 1 --> overwritten
     const int D = x.rows();
 
-    SquareMatrixType actual_hessian = SquareMatrixType::Zero(D, D);
-    SquareMatrixType expected_hessian = SquareMatrixType::Zero(D, D);
+    THessian actual_hessian = THessian::Zero(D, D);
+    THessian expected_hessian = THessian::Zero(D, D);
     hessian(x, actual_hessian);
     finiteHessian(x, expected_hessian, accuracy);
     for (int d = 0; d < D; ++d) {
@@ -137,7 +137,7 @@ class Problem {
     return true;
   }
 
-  virtual void finiteGradient(const  VectorType &x, VectorType &grad, int accuracy = 0) final {
+  virtual void finiteGradient(const  TVector &x, TVector &grad, int accuracy = 0) final {
     // accuracy can be 0, 1, 2, 3
     const Scalar eps = 2.2204e-6;
     const std::vector<std::vector<Scalar>> coeff =
@@ -146,12 +146,12 @@ class Problem {
     { {1, -1}, {-2, -1, 1, 2}, {-3, -2, -1, 1, 2, 3}, {-4, -3, -2, -1, 1, 2, 3, 4} };
     const std::vector<Scalar> dd = {2, 12, 60, 840};
 
-    VectorType finiteDiff(x.rows());
+    TVector finiteDiff(x.rows());
     for (size_t d = 0; d < x.rows(); d++) {
       finiteDiff[d] = 0;
       for (int s = 0; s < 2*(accuracy+1); ++s)
       {
-        VectorType xx = x.eval();
+        TVector xx = x.eval();
         xx[d] += coeff2[accuracy][s]*eps;
         finiteDiff[d] += coeff[accuracy][s]*value(xx);
       }
@@ -160,13 +160,13 @@ class Problem {
     grad = finiteDiff;
   }
 
-  virtual void finiteHessian(const VectorType &x, SquareMatrixType &hessian, int accuracy = 0) final {
+  virtual void finiteHessian(const TVector &x, THessian &hessian, int accuracy = 0) final {
     const Scalar eps = std::numeric_limits<Scalar>::epsilon()*10e7;
 
     if(accuracy == 0) {
       for (size_t i = 0; i < x.rows(); i++) {
         for (size_t j = 0; j < x.rows(); j++) {
-          VectorType xx = x;
+          TVector xx = x;
           Scalar f4 = value(xx);
           xx[i] += eps;
           xx[j] += eps;
@@ -189,7 +189,7 @@ class Problem {
           74(f_{-1,-1}+f_{1,1}-f_{1,-1}-f_{-1,1})
         \end{matrix}\right] }
       */
-      VectorType xx;
+      TVector xx;
       for (size_t i = 0; i < x.rows(); i++) {
         for (size_t j = 0; j < x.rows(); j++) {
 

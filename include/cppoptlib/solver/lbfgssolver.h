@@ -14,20 +14,20 @@ class LbfgsSolver : public ISolver<ProblemType, 1> {
   public:
     using Superclass = ISolver<ProblemType, 1>;
     using typename Superclass::Scalar;
-    using typename Superclass::VectorType;
-    using typename Superclass::SquareMatrixType;
-    using typename Superclass::MatrixType;
+    using typename Superclass::TVector;
+    using typename Superclass::THessian;
+    using MatrixType = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
-    void minimize(ProblemType &objFunc, VectorType &x0) {
+    void minimize(ProblemType &objFunc, TVector &x0) {
         const size_t m = 10;
         const size_t DIM = x0.rows();
         MatrixType sVector = MatrixType::Zero(DIM, m);
         MatrixType yVector = MatrixType::Zero(DIM, m);
         Eigen::Matrix<Scalar, Eigen::Dynamic, 1> alpha = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>::Zero(m);
-        VectorType grad(DIM), q(DIM), grad_old(DIM), s(DIM), y(DIM);
+        TVector grad(DIM), q(DIM), grad_old(DIM), s(DIM), y(DIM);
         objFunc.gradient(x0, grad);
-        VectorType x_old = x0;
-        VectorType x_old2 = x0;
+        TVector x_old = x0;
+        TVector x_old2 = x0;
 
         size_t iter = 0, globIter = 0;
         Scalar H0k = 1;
@@ -45,9 +45,9 @@ class LbfgsSolver : public ISolver<ProblemType, 1> {
             // for i = k − 1, k − 2, . . . , k − m§
             for (int i = k - 1; i >= 0; i--) {
                 // alpha_i <- rho_i*s_i^T*q
-                const double rho = 1.0 / static_cast<VectorType>(sVector.col(i))
-                .dot(static_cast<VectorType>(yVector.col(i)));
-                alpha(i) = rho * static_cast<VectorType>(sVector.col(i)).dot(q);
+                const double rho = 1.0 / static_cast<TVector>(sVector.col(i))
+                .dot(static_cast<TVector>(yVector.col(i)));
+                alpha(i) = rho * static_cast<TVector>(sVector.col(i)).dot(q);
                 // q <- q - alpha_i*y_i
                 q = q - alpha(i) * yVector.col(i);
             }
@@ -56,9 +56,9 @@ class LbfgsSolver : public ISolver<ProblemType, 1> {
             //for i k − m, k − m + 1, . . . , k − 1
             for (int i = 0; i < k; i++) {
                 // beta <- rho_i * y_i^T * r
-                const Scalar rho = 1.0 / static_cast<VectorType>(sVector.col(i))
-                .dot(static_cast<VectorType>(yVector.col(i)));
-                const Scalar beta = rho * static_cast<VectorType>(yVector.col(i)).dot(q);
+                const Scalar rho = 1.0 / static_cast<TVector>(sVector.col(i))
+                .dot(static_cast<TVector>(yVector.col(i)));
+                const Scalar beta = rho * static_cast<TVector>(yVector.col(i)).dot(q);
                 // r <- r + s_i * ( alpha_i - beta)
                 q = q + sVector.col(i) * (alpha(i) - beta);
             }

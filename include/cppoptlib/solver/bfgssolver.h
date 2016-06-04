@@ -14,35 +14,35 @@ class BfgsSolver : public ISolver<ProblemType, 1> {
   public:
     using Superclass = ISolver<ProblemType, 1>;
     using typename Superclass::Scalar;
-    using typename Superclass::VectorType;
-    using typename Superclass::SquareMatrixType;
+    using typename Superclass::TVector;
+    using typename Superclass::THessian;
 
-    void minimize(ProblemType &objFunc, VectorType & x0) {
+    void minimize(ProblemType &objFunc, TVector & x0) {
         const size_t DIM = x0.rows();
-        SquareMatrixType H = SquareMatrixType::Identity(DIM, DIM);
-        VectorType grad(DIM);
-        VectorType x_old = x0;
+        THessian H = THessian::Identity(DIM, DIM);
+        TVector grad(DIM);
+        TVector x_old = x0;
         this->m_current.reset();
         do {
             objFunc.gradient(x0, grad);
-            VectorType searchDir = -1 * H * grad;
+            TVector searchDir = -1 * H * grad;
             // check "positive definite"
             Scalar phi = grad.dot(searchDir);
 
             // positive definit ?
             if (phi > 0) {
                 // no, we reset the hessian approximation
-                H = SquareMatrixType::Identity(DIM, DIM);
+                H = THessian::Identity(DIM, DIM);
                 searchDir = -1 * grad;
             }
 
             const Scalar rate = MoreThuente<ProblemType, 1>::linesearch(x0, searchDir, objFunc) ;
             x0 = x0 + rate * searchDir;
 
-            VectorType grad_old = grad;
+            TVector grad_old = grad;
             objFunc.gradient(x0, grad);
-            VectorType s = rate * searchDir;
-            VectorType y = grad - grad_old;
+            TVector s = rate * searchDir;
+            TVector y = grad - grad_old;
 
             const Scalar rho = 1.0 / y.dot(s);
             H = H - rho * (s * (y.transpose() * H) + (H * y) * s.transpose()) + rho * rho * (y.dot(H * y) + 1.0 / rho)

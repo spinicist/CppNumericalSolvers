@@ -11,20 +11,20 @@ namespace cppoptlib {
 template<typename T>
 class LogisticRegression : public Problem<T> {
   public:
-    using typename Problem<T>::VectorType;
-    using typename Problem<T>::MatrixType;
+    using typename Problem<T>::TVector;
+    using MatrixType = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
     const MatrixType X;
-    const VectorType y;
+    const TVector y;
     const MatrixType XX;
 
-    LogisticRegression(const MatrixType &X_, const VectorType y_) : X(X_), y(y_), XX(X_.transpose()*X_) {}
+    LogisticRegression(const MatrixType &X_, const TVector y_) : X(X_), y(y_), XX(X_.transpose()*X_) {}
 
-    T value(const VectorType &beta) {
+    T value(const TVector &beta) {
         return (1.0/(1.0 + exp(-(X*beta).array())) - y.array()).matrix().squaredNorm();
     }
 
-    void gradient(const VectorType &beta, VectorType &grad) {
-        const VectorType p = 1.0/(1.0 + exp(-(X*beta).array()));
+    void gradient(const TVector &beta, TVector &grad) {
+        const TVector p = 1.0/(1.0 + exp(-(X*beta).array()));
         grad = X.transpose()*(p-y);
     }
 };
@@ -33,21 +33,21 @@ class LogisticRegression : public Problem<T> {
 int main(int argc, char const *argv[]) {
     typedef double T;
     typedef cppoptlib::LogisticRegression<T> LogReg;
-    typedef typename LogReg::VectorType VectorType;
+    typedef typename LogReg::TVector TVector;
     typedef typename LogReg::MatrixType MatrixType;
     srand((unsigned int) time(0));
 
     // create true model
-    VectorType true_beta = VectorType::Random(4);
+    TVector true_beta = TVector::Random(4);
 
     // create data
     MatrixType X = MatrixType::Random(50, 4);
-    VectorType y = 1.0/(1.0 + exp(-(X*true_beta).array()));
+    TVector y = 1.0/(1.0 + exp(-(X*true_beta).array()));
 
     // perform linear regression
     LogReg f(X, y);
 
-    VectorType beta = VectorType::Random(4);
+    TVector beta = TVector::Random(4);
     std::cout << "start in   " << beta.transpose() << std::endl;
     cppoptlib::BfgsSolver<LogReg> solver;
     solver.minimize(f, beta);

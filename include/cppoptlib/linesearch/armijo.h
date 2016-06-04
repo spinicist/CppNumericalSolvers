@@ -10,7 +10,7 @@ template<typename ProblemType, int Ord>
 class Armijo {
 public:
     using Scalar = typename ProblemType::Scalar;
-    using VectorType = typename ProblemType::VectorType;
+    using TVector = typename ProblemType::TVector;
     /**
      * @brief use Armijo Rule for (weak) Wolfe conditiions
      * @details [long description]
@@ -20,13 +20,13 @@ public:
      *
      * @return step-width
      */
-    static Scalar linesearch(const VectorType &x, const VectorType &searchDir, ProblemType &objFunc, const Scalar alpha_init = 1.0) {
+    static Scalar linesearch(const TVector &x, const TVector &searchDir, ProblemType &objFunc, const Scalar alpha_init = 1.0) {
         const Scalar c = 0.2;
         const Scalar rho = 0.9;
         Scalar alpha = alpha_init;
         Scalar f = objFunc.value(x + alpha * searchDir);
         const Scalar f_in = objFunc.value(x);
-        VectorType grad(x.rows());
+        TVector grad(x.rows());
         objFunc.gradient(x, grad);
         const Scalar Cache = c * grad.dot(searchDir);
 
@@ -45,8 +45,8 @@ class Armijo<ProblemType, 2> {
 
  public:
     using typename ProblemType::Scalar;
-    using typename ProblemType::VectorType;
-    using typename ProblemType::SquareMatrixType;
+    using typename ProblemType::TVector;
+    using typename ProblemType::THessian;
     /**
      * @brief use Armijo Rule for (weak) Wolfe conditiions
      * @details [long description]
@@ -56,16 +56,16 @@ class Armijo<ProblemType, 2> {
      *
      * @return step-width
      */
-    static Scalar linesearch(const VectorType &x, const VectorType &searchDir, ProblemType &objFunc) {
+    static Scalar linesearch(const TVector &x, const TVector &searchDir, ProblemType &objFunc) {
         const Scalar c = 0.2;
         const Scalar rho = 0.9;
         Scalar alpha = 1.0;
 
         Scalar f = objFunc.value(x + alpha * searchDir);
         const Scalar f_in = objFunc.value(x);
-        const SquareMatrixType  hessian(x.rows(), x.rows());
+        const THessian  hessian(x.rows(), x.rows());
         objFunc.hessian(x, hessian);
-        VectorType grad(x.rows());
+        TVector grad(x.rows());
         objFunc.gradient(x, grad);
         const Scalar Cache = c * grad.dot(searchDir) + 0.5 * c*c * searchDir.transpose() * (hessian * searchDir);
 

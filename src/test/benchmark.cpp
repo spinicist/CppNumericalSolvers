@@ -22,9 +22,9 @@ using namespace cppoptlib;
 template<typename T>
 class Rosenbrock : public Problem<T, 2> {
  public:
-  using typename Problem<T, 2>::VectorType;
+  using typename Problem<T, 2>::TVector;
 
-  T value(const VectorType &x) {
+  T value(const TVector &x) {
     const size_t n = x.rows();
     T sum = 0;
 
@@ -41,9 +41,9 @@ class Rosenbrock : public Problem<T, 2> {
 template<typename T>
 class Beale : public Problem<T, 2> {
  public:
-  using typename Problem<T, 2>::VectorType;
+  using typename Problem<T, 2>::TVector;
   
-  T value(const VectorType &xx) {
+  T value(const TVector &xx) {
     const T x = xx[0];
     const T y = xx[1];
     const T t1 = (1.5 - x + x * y);
@@ -52,7 +52,7 @@ class Beale : public Problem<T, 2> {
     return  t1 * t1 + t2 * t2 + t3 * t3;
   }
 
-  void gradient(const VectorType &xx, VectorType &grad) {
+  void gradient(const TVector &xx, TVector &grad) {
     const T x = xx[0];
     const T y = xx[1];
 
@@ -64,9 +64,9 @@ class Beale : public Problem<T, 2> {
 template<typename T>
 class GoldsteinPrice  : public Problem<T, 2> {
  public:
-  using typename Problem<T, 2>::VectorType;
+  using typename Problem<T, 2>::TVector;
   
-  T value(const VectorType &xx) {
+  T value(const TVector &xx) {
     const T x = xx[0];
     const T y = xx[1];
 
@@ -82,9 +82,9 @@ class GoldsteinPrice  : public Problem<T, 2> {
 template<typename T>
 class Booth  : public Problem<T, 2> {
  public:
-  using typename Problem<T,2>::VectorType;
+  using typename Problem<T,2>::TVector;
   
-  T value(const VectorType &xx) {
+  T value(const TVector &xx) {
     const T x = xx[0];
     const T y = xx[1];
 
@@ -94,7 +94,7 @@ class Booth  : public Problem<T, 2> {
     return  t1*t1+t2*t2;
   }
 
-  void gradient(const VectorType &xx, VectorType &grad) {
+  void gradient(const TVector &xx, TVector &grad) {
     const T x = xx[0];
     const T y = xx[1];
 
@@ -107,15 +107,15 @@ class Booth  : public Problem<T, 2> {
 template<typename T>
 class Matyas   : public Problem<T, 2> {
  public:
-  using typename Problem<T, 2>::VectorType;
+  using typename Problem<T, 2>::TVector;
   
-  T value(const VectorType &xx) {
+  T value(const TVector &xx) {
     const T x = xx[0];
     const T y = xx[1];
     return  0.26*(x*x+y*y)-0.48*x*y;
   }
 
-  void gradient(const VectorType &xx, VectorType &grad) {
+  void gradient(const TVector &xx, TVector &grad) {
     const T x = xx[0];
     const T y = xx[1];
 
@@ -129,15 +129,15 @@ class Matyas   : public Problem<T, 2> {
 template<typename T>
 class Levi   : public Problem<T, 2> {
  public:
-  using typename Problem<T, 2>::VectorType;
-  T value(const VectorType &xx) {
+  using typename Problem<T, 2>::TVector;
+  T value(const TVector &xx) {
     const T x = xx[0];
     const T y = xx[1];
     
     return sin(3*PI*x)*sin(3*PI*x)+(x-1)*(x-1)*(1+sin(3*PI*y)*sin(3*PI*y)) +(y-1)*(y-1)*(1+sin(2*PI*y)*sin(2*PI*y)); 
   }
 
-  void gradient(const VectorType &xx, VectorType &grad) {
+  void gradient(const TVector &xx, TVector &grad) {
     const T x = xx[0];
     const T y = xx[1];
 

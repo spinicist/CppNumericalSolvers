@@ -9,22 +9,22 @@
 template<typename T>
 class Simple : public cppoptlib::Problem<T, 2> {
   public:
-    using typename cppoptlib::Problem<T, 2>::VectorType; // Inherit the Vector typedef
+    using typename cppoptlib::Problem<T, 2>::TVector; // Inherit the Vector typedef
 
     // this is just the objective (NOT optional)
-    T value(const VectorType &x) {
+    T value(const TVector &x) {
         return 5*x[0]*x[0] + 100*x[1]*x[1]+5;
     }
 
     // if you calculated the derivative by hand
     // you can implement it here (OPTIONAL)
     // otherwise it will fall back to (bad) numerical finite differences
-    void gradient(const VectorType &x, VectorType &grad) {
+    void gradient(const TVector &x, TVector &grad) {
         grad[0]  = 2*5*x[0];
         grad[1]  = 2*100*x[1];
     }
 
-    bool callback(const cppoptlib::Criteria<T> &state, const VectorType &x) {
+    bool callback(const cppoptlib::Criteria<T> &state, const TVector &x) {
         std::cout << "(" << std::setw(2) << state.iterations << ")"
                   << " ||dx|| = " << std::fixed << std::setw(8) << std::setprecision(4) << state.gradNorm
                   << " ||x|| = "  << std::setw(6) << x.norm()
@@ -37,7 +37,7 @@ class Simple : public cppoptlib::Problem<T, 2> {
 int main(int argc, char const *argv[]) {
     typedef Simple<double> TSimple;
     TSimple f;
-    typename TSimple::VectorType x; x << -10, 2;
+    typename TSimple::TVector x; x << -10, 2;
 
     cppoptlib::Criteria<double> crit = cppoptlib::Criteria<double>::defaults(); // Create a Criteria class to set the solver's stop conditions
     crit.iterations = 10000;                              // Increase the number of allowed iterations

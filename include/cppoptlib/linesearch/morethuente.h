@@ -12,7 +12,7 @@ class MoreThuente {
 
  public:
   using Scalar = typename ProblemType::Scalar;
-  using VectorType = typename ProblemType::VectorType;
+  using TVector = typename ProblemType::TVector;
 
   /**
    * @brief use MoreThuente Rule for (strong) Wolfe conditiions
@@ -24,23 +24,23 @@ class MoreThuente {
    * @return step-width
    */
 
-  static Scalar linesearch(const VectorType &x, const VectorType &searchDir, ProblemType &objFunc, const  Scalar alpha_init = 1.0) {
+  static Scalar linesearch(const TVector &x, const TVector &searchDir, ProblemType &objFunc, const  Scalar alpha_init = 1.0) {
     // assume step width
     Scalar ak = alpha_init;
 
     Scalar fval = objFunc.value(x);
-    VectorType  g  = x.eval();
+    TVector  g  = x.eval();
     objFunc.gradient(x, g);
 
-    VectorType s = searchDir.eval();
-    VectorType xx = x.eval();
+    TVector s = searchDir.eval();
+    TVector xx = x.eval();
 
     cvsrch(objFunc, xx, fval, g, ak, s);
 
     return ak;
   }
 
-  static int cvsrch(ProblemType &objFunc, VectorType &x, Scalar f, VectorType &g, Scalar &stp, VectorType &s) {
+  static int cvsrch(ProblemType &objFunc, TVector &x, Scalar f, TVector &g, Scalar &stp, TVector &s) {
     // we rewrite this from MIN-LAPACK and some MATLAB code
     int info           = 0;
     int infoc          = 1;
@@ -67,7 +67,7 @@ class MoreThuente {
     Scalar dgtest     = ftol * dginit;
     Scalar width      = stpmax - stpmin;
     Scalar width1     = 2 * width;
-    VectorType wa = x.eval();
+    TVector wa = x.eval();
 
     Scalar stx        = 0.0;
     Scalar fx         = finit;

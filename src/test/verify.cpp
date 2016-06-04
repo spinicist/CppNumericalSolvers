@@ -25,9 +25,9 @@ typedef ::testing::Types <float, double> MyTypeList;
 template<typename Scalar>
 class RosenbrockValue : public Problem<Scalar, 2> {
   public:
-    using typename Problem<Scalar, 2>::VectorType;
+    using typename Problem<Scalar, 2>::TVector;
     
-    Scalar value(const VectorType &x) {
+    Scalar value(const TVector &x) {
         const Scalar t1 = (1 - x[0]);
         const Scalar t2 = (x[1] - x[0] * x[0]);
         return   t1 * t1 + 100 * t2 * t2;
@@ -39,7 +39,7 @@ class RosenbrockValue : public Problem<Scalar, 2> {
 template<typename Scalar>
 class RosenbrockGradient : public RosenbrockValue<Scalar> {
   public:
-    using typename RosenbrockValue<Scalar>::VectorType;
+    using typename RosenbrockValue<Scalar>::TVector;
     
     /*T value(const Vector<T> &x) {
         const T t1 = (1 - x[0]);
@@ -47,7 +47,7 @@ class RosenbrockGradient : public RosenbrockValue<Scalar> {
         return   t1 * t1 + 100 * t2 * t2;
     }*/
 
-    void gradient(const VectorType &x, VectorType &grad) {
+    void gradient(const TVector &x, TVector &grad) {
         grad[0]  = -2 * (1 - x[0]) + 200 * (x[1] - x[0] * x[0]) * (-2 * x[0]);
         grad[1]  = 200 * (x[1] - x[0] * x[0]);
     }
@@ -58,8 +58,8 @@ class RosenbrockGradient : public RosenbrockValue<Scalar> {
 template<typename Scalar>
 class RosenbrockFull : public RosenbrockGradient<Scalar> {
   public:
-  using typename RosenbrockGradient<Scalar>::VectorType;
-  using typename Problem<Scalar, 2>::SquareMatrixType;
+  using typename RosenbrockGradient<Scalar>::TVector;
+  using typename Problem<Scalar, 2>::THessian;
     /*T value(const Vector<T> &x) {
         const T t1 = (1 - x[0]);
         const T t2 = (x[1] - x[0] * x[0]);
@@ -71,7 +71,7 @@ class RosenbrockFull : public RosenbrockGradient<Scalar> {
         grad[1]  = 200 * (x[1] - x[0] * x[0]);
     }*/
 
-    void hessian(const VectorType &x, SquareMatrixType &hessian) {
+    void hessian(const TVector &x, THessian &hessian) {
         hessian(0, 0) = 1200 * x[0] * x[0] - 400 * x[1] + 1;
         hessian(0, 1) = -400 * x[0];
         hessian(1, 0) = -400 * x[0];
@@ -92,21 +92,21 @@ template <class T> class CentralDifference : public testing::Test{};
 #define SOLVE_PROBLEM( sol, func, a, b, fx ) \
     typedef func<TypeParam> TProblem;\
     TProblem f;\
-    typename TProblem::VectorType x; x << a, b;\
+    typename TProblem::TVector x; x << a, b;\
     sol<TProblem> solver;\
     solver.minimize(f, x);\
     EXPECT_NEAR(fx, f(x), PRECISION);
 #define SOLVE_PROBLEM_F( sol, func, a, b, fx ) \
     typedef func<float> TProblem;\
     TProblem f;\
-    typename TProblem::VectorType x; x << a, b;\
+    typename TProblem::TVector x; x << a, b;\
     sol<TProblem> solver;\
     solver.minimize(f, x);\
     EXPECT_NEAR(fx, f(x), PRECISION);
 #define SOLVE_PROBLEM_D( sol, func, a, b, fx ) \
     typedef func<double> TProblem;\
     TProblem f;\
-    typename TProblem::VectorType x; x << a, b;\
+    typename TProblem::TVector x; x << a, b;\
     sol<TProblem> solver;\
     solver.minimize(f, x);\
     EXPECT_NEAR(fx, f(x), PRECISION);
@@ -173,17 +173,17 @@ TYPED_TEST(CentralDifference, Gradient){
     // simple function y <- 3*a-b
     class Func : public Problem<TypeParam, 2> {
       public:
-        using typename Problem<TypeParam, 2>::VectorType;
-        TypeParam value(const VectorType &x) {
+        using typename Problem<TypeParam, 2>::TVector;
+        TypeParam value(const TVector &x) {
             return 3*x[0]-x[1];
         }
     };
-    typename Func::VectorType x0;
+    typename Func::TVector x0;
     x0(0) = 0;
     x0(1) = 0;
 
     Func f;
-    typename Func::VectorType grad;
+    typename Func::TVector grad;
     // check from fast/bad to slower/better approximation of the gradient
     for (int accuracy = 0; accuracy < 4; ++accuracy)
     {
@@ -197,17 +197,17 @@ TYPED_TEST(CentralDifference, Hessian){
     // simple function y <- 3*a^2-a*b
     class Func : public Problem<TypeParam, 2> {
       public:
-        using typename Problem<TypeParam, 2>::VectorType;
-        TypeParam value(const VectorType &x) {
+        using typename Problem<TypeParam, 2>::TVector;
+        TypeParam value(const TVector &x) {
             return 3*x[0]*x[0]-x[1]*x[0];
         }
     };
-    typename Func::VectorType x0;
+    typename Func::TVector x0;
     x0(0) = 0;
     x0(1) = 0;
 
     Func f;
-    typename Func::SquareMatrixType hessian;
+    typename Func::THessian hessian;
 
     // check using fast version
     f.finiteHessian(x0, hessian);

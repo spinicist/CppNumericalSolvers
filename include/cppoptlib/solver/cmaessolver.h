@@ -16,9 +16,8 @@ class CMAesSolver : public ISolver<ProblemType, 1> {
   public:
     using Superclass = ISolver<ProblemType, 1>;
     using typename Superclass::Scalar;
-    using typename Superclass::VectorType;
-    using typename Superclass::SquareMatrixType;
-    using typename Superclass::MatrixType;
+    using typename Superclass::TVector;
+    using typename Superclass::THessian;
 
   protected:
   // random number generator
@@ -28,19 +27,19 @@ class CMAesSolver : public ISolver<ProblemType, 1> {
   std::mt19937 gen;
   // each sample from population
   struct individual {
-    VectorType pos;
-    VectorType step;
+    TVector pos;
+    TVector step;
     Scalar cost;
 
     individual(int n) {
-      pos = VectorType::Zero(n);
-      step = VectorType::Zero(n);
+      pos = TVector::Zero(n);
+      step = TVector::Zero(n);
     }
     individual() {}
 
     void reset(int n) {
-      pos = VectorType::Zero(n);
-      step = VectorType::Zero(n);
+      pos = TVector::Zero(n);
+      step = TVector::Zero(n);
     }
   };
 
@@ -52,25 +51,25 @@ class CMAesSolver : public ISolver<ProblemType, 1> {
    * @param covar covariance
    * @return [description]
    */
-  VectorType sampleMvn(VectorType &mean, SquareMatrixType &covar) {
+  TVector sampleMvn(TVector &mean, THessian &covar) {
 
-    SquareMatrixType normTransform;
-    Eigen::LLT<SquareMatrixType> cholSolver(covar);
+    THessian normTransform;
+    Eigen::LLT<THessian> cholSolver(covar);
 
     if (cholSolver.info() == Eigen::Success) {
       normTransform = cholSolver.matrixL();
     } else {
-      Eigen::SelfAdjointEigenSolver<SquareMatrixType> eigenSolver(covar);
+      Eigen::SelfAdjointEigenSolver<THessian> eigenSolver(covar);
       normTransform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
     }
 
-    VectorType stdNormDistr = VectorType::Zero(mean.rows());
+    TVector stdNormDistr = TVector::Zero(mean.rows());
     std::normal_distribution<> d(0, 1);
     for (int i = 0; i < mean.rows(); ++i) {
       stdNormDistr[i] = d(gen);
     }
 
-    VectorType samples = normTransform * stdNormDistr + mean;
+    TVector samples = normTransform * stdNormDistr + mean;
 
     return samples;
   }
@@ -87,7 +86,7 @@ class CMAesSolver : public ISolver<ProblemType, 1> {
    *
    * @param objFunc [description]
    */
-  void minimize(ProblemType &objFunc, VectorType &x0) {
+  void minimize(ProblemType &objFunc, TVector &x0) {
 
     const int DIM = x0.rows();
 
@@ -121,33 +120,33 @@ class CMAesSolver : public ISolver<ProblemType, 1> {
     const Scalar cmu      = std::min(1. - c1, alpha_mu * (mu_eff - 2. + 1. / mu_eff) / ((DIM + 2.) * (DIM + 2.) + alpha_mu * mu_eff / 2.));
     const Scalar hth      = (1.4 + 2 / (DIM + 1.)) * ENN;
 
-    VectorType ps;
-    VectorType pc;
-    SquareMatrixType C;
+    TVector ps;
+    TVector pc;
+    THessian C;
     Scalar sigma = sigma0;
 
     individual M;
 
-    VectorType t = VectorType::Zero(DIM);
+    TVector t = TVector::Zero(DIM);
     ps = t;
     pc = t;
-    SquareMatrixType eye = SquareMatrixType::Identity(DIM, DIM);
+    THessian eye = THessian::Identity(DIM, DIM);
     C = eye;
 
     std::uniform_real_distribution<> dis(VarMin, VarMax);
-    M.pos = VectorType::Zero(DIM);
+    M.pos = TVector::Zero(DIM);
     for (int i = 0; i < DIM; ++i) {
       M.pos[i] = dis(gen);
     }
 
-    M.step = VectorType::Zero(DIM);
+    M.step = TVector::Zero(DIM);
     M.cost = objFunc(M.pos);
 
     individual bestSol = M;
 
     Scalar bestCostSoFar;
 
-    VectorType zeroVectorTemplate = VectorType::Zero(DIM);
+    TVector zeroVectorTemplate = TVector::Zero(DIM);
 
     // CMA-ES Main Loop
     for (size_t curIter = 0; curIter < this->m_stop.iterations; ++curIter) {
@@ -179,7 +178,7 @@ class CMAesSolver : public ISolver<ProblemType, 1> {
         break;
 
       // update mean (TODO: matrix-vec-multiplication with permutation matrix?)
-      M.step = VectorType::Zero(DIM);
+      M.step = TVector::Zero(DIM);
       for (int j = 0; j < mu; ++j) {
         M.step += w[j] * pop[j].step;
       }
@@ -209,9 +208,9 @@ class CMAesSolver : public ISolver<ProblemType, 1> {
         C += cmu * w(j) * pop[j].step * pop[j].step.transpose();
       }
 
-      Eigen::EigenSolver<SquareMatrixType> eig(C);
-      VectorType E = eig.eigenvalues().real();
-      SquareMatrixType V = eig.eigenvectors().real();
+      Eigen::EigenSolver<THessian> eig(C);
+      TVector E = eig.eigenvalues().real();
+      THessian V = eig.eigenvectors().real();
 
       // check positive definitness of covariance matrix (all eigenvalues must be > 0)
       bool pd = true;

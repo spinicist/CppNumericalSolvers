@@ -14,7 +14,7 @@ class GradientDescentSolver : public ISolver<ProblemType, 1> {
 public:
   using Superclass = ISolver<ProblemType, 1>;
   using typename Superclass::Scalar;
-  using typename Superclass::VectorType;
+  using typename Superclass::TVector;
 
   /**
    * @brief minimize
@@ -22,9 +22,9 @@ public:
    *
    * @param objFunc [description]
    */
-  void minimize(ProblemType &objFunc, VectorType &x0) {
+  void minimize(ProblemType &objFunc, TVector &x0) {
 
-    VectorType direction(x0.rows());
+    TVector direction(x0.rows());
     this->m_current.reset();
     do {
       ;

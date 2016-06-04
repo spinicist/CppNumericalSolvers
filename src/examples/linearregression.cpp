@@ -8,42 +8,42 @@
 template<typename T>
 class LinearRegression : public cppoptlib::Problem<T> {
   public:
-    using typename cppoptlib::Problem<T>::VectorType;
-    using typename cppoptlib::Problem<T>::MatrixType;
+    using typename cppoptlib::Problem<T>::TVector;
+    using MatrixType = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 
   protected:
     const MatrixType X;
-    const VectorType y;
+    const TVector y;
     const MatrixType XX;
 
   public:
-    LinearRegression(const MatrixType &X_, const VectorType &y_) : X(X_), y(y_), XX(X_.transpose()*X_) {}
+    LinearRegression(const MatrixType &X_, const TVector &y_) : X(X_), y(y_), XX(X_.transpose()*X_) {}
 
-    T value(const VectorType &beta) {
+    T value(const TVector &beta) {
         return 0.5*(X*beta-y).squaredNorm();
     }
 
-    void gradient(const VectorType &beta, VectorType &grad) {
+    void gradient(const TVector &beta, TVector &grad) {
         grad = XX*beta - X.transpose()*y;
     }
 };
 
 int main(int argc, char const *argv[]) {
     typedef LinearRegression<double> TLinearRegression;
-    typedef typename TLinearRegression::VectorType VectorType;
+    typedef typename TLinearRegression::TVector TVector;
     typedef typename TLinearRegression::MatrixType MatrixType;
 
     // create true model
-    VectorType true_beta = VectorType::Random(4);
+    TVector true_beta = TVector::Random(4);
 
     // create data
     MatrixType X = MatrixType::Random(50, 4);
-    VectorType y = X*true_beta;
+    TVector y = X*true_beta;
 
     // perform linear regression
     TLinearRegression f(X, y);
 
-    VectorType beta = VectorType::Random(4);
+    TVector beta = TVector::Random(4);
     std::cout << "start in   " << beta.transpose() << std::endl;
     cppoptlib::BfgsSolver<TLinearRegression> solver;
     solver.minimize(f, beta);

@@ -11,17 +11,17 @@ using namespace cppoptlib;
 template<typename T>
 class Simple : public Problem<T> {
   public:
-    using typename Problem<T>::VectorType;
+    using typename Problem<T>::TVector;
 
     // this is just the objective (NOT optional)
-    T value(const VectorType &x) {
+    T value(const TVector &x) {
         return 5*x[0]*x[0] + 100*x[1]*x[1]+5;
     }
 
     // if you calculated the derivative by hand
     // you can implement it here (OPTIONAL)
     // otherwise it will fall back to (bad) numerical finite differences
-    void gradient(const VectorType &x, VectorType &grad) {
+    void gradient(const TVector &x, TVector &grad) {
         grad[0]  = 2*5*x[0];
         grad[1]  = 2*100*x[1];
     }

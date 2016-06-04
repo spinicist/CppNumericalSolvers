@@ -14,7 +14,7 @@ class ConjugatedGradientDescentSolver : public ISolver<ProblemType, 1> {
  public:
   using Superclass = ISolver<ProblemType, 1>;
   using typename Superclass::Scalar;
-  using typename Superclass::VectorType;
+  using typename Superclass::TVector;
 
   /**
    * @brief minimize
@@ -22,11 +22,11 @@ class ConjugatedGradientDescentSolver : public ISolver<ProblemType, 1> {
    *
    * @param objFunc [description]
    */
-  void minimize(ProblemType &objFunc, VectorType &x0) {
-    VectorType grad(x0.rows());
-    VectorType grad_old(x0.rows());
-    VectorType Si(x0.rows());
-    VectorType Si_old(x0.rows());
+  void minimize(ProblemType &objFunc, TVector &x0) {
+    TVector grad(x0.rows());
+    TVector grad_old(x0.rows());
+    TVector Si(x0.rows());
+    TVector Si_old(x0.rows());
 
     this->m_current.reset();
     do {

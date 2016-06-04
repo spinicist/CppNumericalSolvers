@@ -14,20 +14,20 @@ class NewtonDescentSolver : public ISolver<ProblemType, 2> {
   public:
     using Superclass = ISolver<ProblemType, 2>;
     using typename Superclass::Scalar;
-    using typename Superclass::VectorType;
-    using typename Superclass::SquareMatrixType;
+    using typename Superclass::TVector;
+    using typename Superclass::THessian;
 
-    void minimize(ProblemType &objFunc, VectorType &x0) {
+    void minimize(ProblemType &objFunc, TVector &x0) {
         const int DIM = x0.rows();
-        VectorType grad = VectorType::Zero(DIM);
-        SquareMatrixType hessian = SquareMatrixType::Zero(DIM, DIM);
+        TVector grad = TVector::Zero(DIM);
+        THessian hessian = THessian::Zero(DIM, DIM);
         Scalar gradNorm = 0;
         this->m_current.reset();
         do {
             objFunc.gradient(x0, grad);
             objFunc.hessian(x0, hessian);
-            hessian += (1e-5) * SquareMatrixType::Identity(DIM, DIM);
-            VectorType delta_x = hessian.lu().solve(-grad);
+            hessian += (1e-5) * THessian::Identity(DIM, DIM);
+            TVector delta_x = hessian.lu().solve(-grad);
             const double rate = Armijo<ProblemType, 1>::linesearch(x0, delta_x, objFunc) ;
             x0 = x0 + rate * delta_x;
             // std::cout << "iter: "<<iter<< ", f = " <<  objFunc.value(x0) << ", ||g||_inf "<<gradNorm  << std::endl;
